@@ -22,8 +22,11 @@ try {
 } catch (e) {
 }
 
+const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:9000';
+const ADMIN_URL = process.env.ADMIN_URL || 'http://localhost:8080';
+
 // CORS when consuming Medusa from admin
-const ADMIN_CORS = process.env.ADMIN_CORS || "http://localhost:7000,http://localhost:7001";
+const ADMIN_CORS = process.env.ADMIN_CORS || "http://localhost:7000,http://localhost:7001,http://localhost:8080";
 
 // CORS to avoid issues when consuming Medusa from a client
 const STORE_CORS = process.env.STORE_CORS || "http://localhost:8000";
@@ -39,10 +42,31 @@ const REDIS_URL = process.env.REDIS_URL || "redis://localhost:6379";
 const STRIPE_API_KEY = process.env.STRIPE_API_KEY || "";
 const STRIPE_WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET || "";
 
+// Google Auth
+const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || "";
+const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET || "";
+
 // This is the place to include plugins. See API documentation for a thorough guide on plugins.
 const plugins = [
   `medusa-fulfillment-manual`,
   `medusa-payment-manual`,
+  {
+    resolve: 'medusa-plugin-auth',
+    options: {
+      google: {
+        clientID: GOOGLE_CLIENT_ID,
+        clientSecret: GOOGLE_CLIENT_SECRET,
+        admin: {
+          callbackUrl: `${BACKEND_URL}/admin/auth/google/cb`,
+          failureRedirect: `${ADMIN_URL}/login`,
+          successRedirect: `${ADMIN_URL}/`,
+          authPath: '/admin/auth/google',
+          authCallbackPath: '/admin/auth/google/cb',
+          expiresIn: '24h',
+        }
+      }
+    }
+  }
   // Uncomment to add Stripe support.
   // You can create a Stripe account via: https://stripe.com
   // {
@@ -56,12 +80,10 @@ const plugins = [
 
 module.exports = {
   projectConfig: {
-    // redis_url: REDIS_URL,
+    redis_url: REDIS_URL,
     // For more production-like environment install PostgresQL
-    // database_url: DATABASE_URL,
-    // database_type: "postgres",
-    database_database: "./medusa-db.sql",
-    database_type: "sqlite",
+    database_url: DATABASE_URL,
+    database_type: "postgres",
     store_cors: STORE_CORS,
     admin_cors: ADMIN_CORS,
   },
